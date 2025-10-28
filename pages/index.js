@@ -9,12 +9,17 @@ export default function IndexPage() {
   const router = useRouter();
 
   useEffect(() => {
+    console.log("🟦 [Init] Starting IndexPage useEffect...");
+
     const MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
     let uid = localStorage.getItem("userId");
     let createdAt = localStorage.getItem("createdAt");
 
+    console.log("📦 [LocalStorage before check]", { uid, createdAt });
+
     // Invalidate old user ID
     if (uid && createdAt && Date.now() - parseInt(createdAt) > MAX_AGE) {
+      console.warn("⚠️ [LocalStorage] User ID expired. Clearing localStorage.");
       localStorage.clear();
       uid = null;
     }
@@ -24,30 +29,43 @@ export default function IndexPage() {
       uid = generateUUID();
       localStorage.setItem("userId", uid);
       localStorage.setItem("createdAt", Date.now().toString());
+      console.log("🆕 [LocalStorage] Generated new userId:", uid);
     }
 
     setUserId(uid);
+    console.log("🧩 [UserID Set] userId =", uid);
 
     // Fetch tokenVerified from DB
+    console.log("🌐 [Fetch] Checking token verification in DB for:", uid);
+
     fetch(`/.netlify/functions/check/${uid}`)
       .then(res => res.json())
       .then(data => {
-        console.log("✅ DB Check:", data);
+        console.log("✅ [DB Response]", data);
+
         const isVerifiedInDB = data.exists && data.tokenVerified === true;
         setTokenVerified(isVerifiedInDB);
+        console.log("🔎 [DB Token Verified]", isVerifiedInDB);
 
         // Check localStorage for short-lived token
         const storedValidToken = localStorage.getItem("validToken") === "true";
         const validTokenExp = localStorage.getItem("validTokenExpiration");
         const isNotExpired = validTokenExp && Date.now() < parseInt(validTokenExp);
 
-        const isValidToken = storedValidToken && isNotExpired;
+        console.log("💾 [Local Token Check]", {
+          storedValidToken,
+          validTokenExp,
+          isNotExpired
+        });
 
+        const isValidToken = storedValidToken && isNotExpired;
         setValidToken(isValidToken);
+        console.log("🔒 [Final Token Validity]", isValidToken);
+
         setLoading(false);
       })
       .catch(err => {
-        console.error("❌ DB check error:", err);
+        console.error("❌ [Fetch Error] DB check failed:", err);
         setLoading(false);
       });
   }, []);
@@ -59,7 +77,12 @@ export default function IndexPage() {
       return v.toString(16);
     });
 
-  console.log("🔍 Final States → tokenVerified:", tokenVerified, "validToken:", validToken);
+  console.log("🧭 [Render State]", {
+    userId,
+    tokenVerified,
+    validToken,
+    loading
+  });
 
   return (
     <div className="glassmorphism-page">
@@ -74,7 +97,10 @@ export default function IndexPage() {
         {/* CONDITIONAL BUTTONS */}
         {tokenVerified && validToken ? (
           <button
-            onClick={() => router.push("/index1")}
+            onClick={() => {
+              console.log("🟩 [Action] Navigating to /index1");
+              router.push("/index1");
+            }}
             className="visitButton"
           >
             Visit HomePage
@@ -83,7 +109,10 @@ export default function IndexPage() {
           <div>
             <p>✅ Token is verified in DB. Please finalize it...</p>
             <button
-              onClick={() => router.push("/verification-success")}
+              onClick={() => {
+                console.log("🟧 [Action] Navigating to /verification-success");
+                router.push("/verification-success");
+              }}
               className="verifyButton"
             >
               Set Token
@@ -99,7 +128,10 @@ export default function IndexPage() {
                   ⚠️ Token not verified. Please verify first.
                 </p>
                 <button
-                  onClick={() => router.push("/Verifypage.html")}
+                  onClick={() => {
+                    console.log("🟥 [Action] Navigating to /Verifypage.html");
+                    router.push("/Verifypage.html");
+                  }}
                   className="verifyButton"
                 >
                   Go to Verify Page
