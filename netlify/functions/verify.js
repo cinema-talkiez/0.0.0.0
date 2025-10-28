@@ -21,7 +21,7 @@ module.exports.handler = async (event) => {
   }
 
   if (!isConnected) {
-    const uri = process.env.MONGODB_URI;
+    const uri = process.env.MONGO_URI;
     if (!uri) {
       return {
         statusCode: 500,
